@@ -1,0 +1,26 @@
+version: '3'
+
+includes:
+  api:
+    taskfile: apps/api/Taskfile.yml
+    dir: apps/api
+  web:
+    taskfile: apps/web/Taskfile.yml
+    dir: apps/web
+
+tasks:
+  default:
+    desc: Show product-owned commands
+    cmds:
+      - task --list
+
+  check:
+    desc: Run each runtime's complete verification
+    cmds:
+      - task: api:check
+      - task: web:check
+
+  test:browser:
+    desc: Verify the real web components with synthetic isolated browser fixtures
+    cmds:
+      - task: web:test:browser

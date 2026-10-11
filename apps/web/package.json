@@ -1,0 +1,42 @@
+{
+  "name": "project-profit-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Project Profit Tracker web interface and stateless authenticated API adapter (BFF).",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 -p 3000",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 -p 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "fixture:build": "vite build --config tests/browser/fixture/vite.config.ts",
+    "fixture:serve": "vite preview --config tests/browser/fixture/vite.config.ts --host 127.0.0.1 --port 4173 --strictPort",
+    "test:browser": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource-variable/noto-sans-thai": "^5.2.0",
+    "jose": "^6.2.12",
+    "next": "16.4.0",
+    "openid-client": "^6.8.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^30.1.2",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

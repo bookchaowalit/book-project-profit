@@ -1,0 +1,35 @@
+version: '3'
+
+# Run from the repository root with: task --dir apps/web check
+tasks:
+  install:
+    desc: Install the locked web dependencies
+    cmds:
+      - npm ci
+
+  typecheck:
+    desc: TypeScript type check
+    cmds:
+      - npm run typecheck
+
+  test:
+    desc: Unit and component tests (no network, no IdP, no runtime secrets)
+    cmds:
+      - npm test
+
+  build:
+    desc: Production build without runtime secrets
+    cmds:
+      - npm run build
+
+  check:
+    desc: Decisive web checks - typecheck, tests, build (browser fixture is test:browser)
+    cmds:
+      - task: typecheck
+      - task: test
+      - task: build
+
+  test:browser:
+    desc: Playwright component-fixture test (synthetic data; not production auth E2E)
+    cmds:
+      - npm run test:browser

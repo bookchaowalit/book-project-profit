@@ -1,0 +1,140 @@
+{
+  "title": "เลือกหน้าจอสำหรับ Project Profit Tracker",
+  "question": "ทุกแบบใช้ FastAPI + PostgreSQL และ workflow เดียวกัน เลือกวิธีอ่านต้นทุนกับกำไรที่เหมาะกับการใช้งานของคุณ",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Profit Diff",
+      "kicker": "THE ROLL",
+      "lineage": "การเทียบใบเสนอราคากับผลจริง และหน้าตรวจความเปลี่ยนแปลง",
+      "thesis": "อ่านสัญญาเทียบกับเงินที่ได้รับ แล้วเห็นว่าเวลาและค่าใช้จ่ายเปลี่ยนกำไรอย่างไร",
+      "palette": ["#f6f7f5", "#17211b", "#256447", "#a33a37"],
+      "materials": ["ตารางคู่เทียบ", "ตัวเลข tabular", "เส้นแบ่งบาง"],
+      "viewport": "รายชื่อโปรเจกต์ทางซ้าย ผลจริงและสัญญาคู่กัน พร้อมรายการต้นทุนที่กดตรวจได้",
+      "risk": "ต้องใช้คำไทยที่ชัด เพื่อไม่ให้หน้าตาแบบ diff ดูเป็นเครื่องมือสำหรับ developer เท่านั้น",
+      "raised": [
+        {"from": "darkroom", "raise": "ทุกสถานะอ่านได้จากตัวเลขและข้อความ ไม่พึ่งสีเพียงอย่างเดียว"},
+        {"from": "grid", "raise": "ตำแหน่งตัวเลขและหน่วยคงที่ทุกหน้าจอ"},
+        {"from": "garden", "raise": "การเพิ่มข้อมูลสำคัญมีตำแหน่งและความเด่นที่หาเจอทันที"},
+        {"from": "timetable", "raise": "ทุกจำนวนเงินมีบริบทสกุลเงินและหัวคอลัมน์ที่ไม่หายไป"}
+      ],
+      "wireframe": {"cols": 12, "rows": 10, "regions": [
+        {"label": "โปรเจกต์", "x": 0, "y": 0, "w": 3, "h": 10},
+        {"label": "สัญญา / ผลจริง", "x": 3, "y": 0, "w": 9, "h": 4, "accent": true},
+        {"label": "ต้นทุนและรายการบันทึก", "x": 3, "y": 4, "w": 9, "h": 6}
+      ]}
+    },
+    {
+      "id": "model-pick",
+      "label": "Job Cost Workbench",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "ใบต้นทุนงานและโต๊ะทำงานของ studio",
+      "thesis": "แต่ละโปรเจกต์เป็นใบงานที่รวมรายรับ เวลา และต้นทุนไว้บนพื้นผิวเดียว",
+      "palette": ["#f7f5ef", "#252a25", "#45664b", "#a24b36"],
+      "materials": ["พื้นกระดาษเรียบ", "ตารางใบงาน", "แถบเครื่องมือ compact"],
+      "viewport": "รายการโปรเจกต์และใบงานที่เลือก พร้อมสูตรกำไรและช่องบันทึกในหน้าจอเดียว",
+      "risk": "คุ้นเคยและใช้งานง่าย แต่เป็นทิศทางที่เครื่องมือการเงินหลายตัวเลือกอยู่แล้ว",
+      "wireframe": {"cols": 12, "rows": 10, "regions": [
+        {"label": "รายการงาน", "x": 0, "y": 0, "w": 4, "h": 10},
+        {"label": "ใบต้นทุนงาน", "x": 4, "y": 0, "w": 8, "h": 6, "accent": true},
+        {"label": "บันทึกรายการ", "x": 4, "y": 6, "w": 8, "h": 4}
+      ]}
+    },
+    {
+      "id": "metro",
+      "label": "Metro Workspaces",
+      "verdict": "competitive",
+      "lineage": "Metro typographic interface",
+      "thesis": "เลือก workspace และงานด้วยตัวอักษรชัดและพื้นที่สี แล้วเข้าสู่ตารางตัวเลข",
+      "palette": ["#101010", "#ffffff", "#16b1c6", "#eabf3b"],
+      "materials": ["พื้นที่สีแบน", "หัวข้อใหญ่", "pivot navigation"],
+      "viewport": "ชื่อ workspace เด่น โปรเจกต์เป็นประตูเข้าสู่ข้อมูลรายรับและต้นทุน",
+      "case": "การนำทางคุ้นเคย แต่พื้นที่สีขนาดใหญ่ทำให้เทียบตัวเลขหลายโปรเจกต์ได้ช้ากว่า",
+      "risk": "ต้องลดความเคลื่อนไหวของ tile เมื่อบันทึกข้อมูล เพื่อไม่รบกวนงานการเงิน",
+      "hero": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/digital-design-canon-metro-typographic-tiles.webp"
+    },
+    {
+      "id": "ticket",
+      "label": "Project Receipt Wallet",
+      "verdict": "competitive",
+      "lineage": "สมุดคูปองและซองเอกสารงาน",
+      "thesis": "แยกสัญญา เวลา ค่าใช้จ่าย และเงินที่ได้รับเป็นเอกสารตรวจสอบได้ของแต่ละงาน",
+      "palette": ["#fafafa", "#1f3558", "#b53c38", "#6c4380"],
+      "materials": ["ช่องเอกสารแบบฟอร์ม", "แท็บ", "สถานะยืนยันเป็นข้อความ"],
+      "viewport": "สมุดงานที่มีแท็บรายรับ เวลา และค่าใช้จ่าย พร้อมสรุปกำไรด้านบน",
+      "case": "โครงเอกสารช่วยแยกข้อเท็จจริง แต่ภาพตั๋วเดินทางไม่ตรงกับชีวิต freelancer เท่าทิศทางหลัก",
+      "risk": "ต้องรักษาการเข้าถึงรายการทั้งหมดโดยไม่บังคับให้ผู้ใช้ผ่านขั้นตอนเรียงลำดับ",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-jet-age-ticket-wallet-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/vernacular-ephemera-jet-age-ticket-wallet.webp"
+    },
+    {
+      "id": "darkroom",
+      "label": "Exposure Record",
+      "verdict": "declined",
+      "lineage": "บันทึกการอัดภาพ darkroom",
+      "thesis": "ซ้อนข้อมูลผลจริงกับแผนผ่าน tonal ramp และสถานะการเปลี่ยนแปลง",
+      "palette": ["#f5f5f4", "#171717", "#b73277"],
+      "materials": ["tonal ramp", "แผ่นข้อมูลซ้อน"],
+      "viewport": "แผ่นต้นทุนหลายชั้นที่ใช้ความเข้มแสดงความเปลี่ยนแปลง",
+      "case": "ภาพเปรียบของการอัดภาพไม่ช่วยให้ freelancer อ่านรายรับและต้นทุนชัดขึ้น",
+      "kept": "สถานะต้องอ่านได้โดยไม่พึ่งสี",
+      "risk": "ข้อมูลการเงินไม่ควรถูกซ่อนใต้แผ่นซ้อน",
+      "hero": "https://impeccable.style/worlds/cards/operate-b-exposure-record-zone-sheets-hero.webp"
+    },
+    {
+      "id": "grid",
+      "label": "Construction Grid",
+      "verdict": "declined",
+      "lineage": "Wim Crouwel type specimen",
+      "thesis": "จัดข้อมูลต้นทุนด้วยกริดที่เห็นโครงสร้างชัด",
+      "palette": ["#ffffff", "#17212f", "#436cca"],
+      "materials": ["กริด", "ตัวอักษรแบบ specimen"],
+      "viewport": "หัวเรื่องขนาดใหญ่และข้อมูลวางตามช่องกริด",
+      "case": "ความใหญ่ของตัวอักษรแย่งพื้นที่ข้อมูลโดยไม่เพิ่มความชัดของสูตรกำไร",
+      "kept": "แนวตัวเลขและหน่วยต้องสม่ำเสมอ",
+      "risk": "ผู้ใช้ควรอ่านข้อมูล ไม่ใช่เรียนรู้กริด",
+      "hero": "https://impeccable.style/worlds/cards/crouwel-grid-specimen-hero.webp"
+    },
+    {
+      "id": "garden",
+      "label": "Guide Map",
+      "verdict": "declined",
+      "lineage": "แผนที่สวนและ guide map",
+      "thesis": "แยกงานและสถานะด้วยพื้นที่สีและรูปทรง",
+      "palette": ["#f5f1e4", "#2c2e2a", "#8ed462", "#f5e211"],
+      "materials": ["พื้นที่สี", "รูปทรงแผนที่"],
+      "viewport": "โปรเจกต์อยู่ในพื้นที่สีที่เปิดเข้าสู่รายละเอียดได้",
+      "case": "รูปทรงแผนที่ไม่สัมพันธ์กับการเทียบรายรับและต้นทุน",
+      "kept": "ปุ่มบันทึกข้อมูลต้องเด่นและหาเจอง่าย",
+      "risk": "รูปทรงไม่ควรลดพื้นที่ตาราง",
+      "hero": "https://impeccable.style/worlds/cards/aww2-zoo-gardens-guide-map-hero.webp"
+    },
+    {
+      "id": "timetable",
+      "label": "Timetable Rack",
+      "verdict": "declined",
+      "lineage": "ตารางเวลา pocket airline",
+      "thesis": "ให้ทุกจำนวนอยู่ในคอลัมน์และช่องสถานะคงที่",
+      "palette": ["#dfba46", "#242a29", "#f5f1df", "#3d624d"],
+      "materials": ["คอลัมน์ตาราง", "แผ่นข้อมูล"],
+      "viewport": "รายการงานเรียงบนแนวเดียวโดยแบ่งประเภทด้วยน้ำหนักและเส้น",
+      "case": "ตัวอักษรขนาดเดียวและพื้นเอียงไม่เพิ่มความชัดของข้อมูลกำไร",
+      "kept": "หัวคอลัมน์และหน่วยต้องอยู่คู่ข้อมูลเสมอ",
+      "risk": "การเลื่อนแนวนอนไม่ควรเป็นวิธีหลักบนมือถือ",
+      "hero": "https://impeccable.style/worlds/cards/rw-timetable-slide-rack-hero.webp"
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "code", "toggle": false},
+  "canon": true,
+  "canonCard": {
+    "label": "รูปแบบ dashboard มาตรฐาน",
+    "thesis": "เมนูด้านข้าง ตารางโปรเจกต์ และแบบฟอร์มแบบ SaaS ที่คุ้นเคย",
+    "palette": ["#ffffff", "#182032", "#355ac4"],
+    "materials": ["ตาราง", "แบบฟอร์ม", "พื้นที่เนื้อหาเรียบ"],
+    "viewport": "รายการโปรเจกต์ที่เลือกแล้วเปิดหน้ารายละเอียด",
+    "risk": "คุ้นเคย แต่เอกลักษณ์เหมือนเครื่องมือบริหารงานทั่วไป"
+  },
+  "steer": true
+}
