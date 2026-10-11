@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-11T18:14:37Z",
+  "title": "Design System: Project Profit Tracker",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Paper" },
+      "ink": { "role": "neutral", "displayName": "Ink" },
+      "muted": { "role": "neutral", "displayName": "Muted" },
+      "rule": { "role": "neutral", "displayName": "Rule" },
+      "rule-strong": { "role": "neutral", "displayName": "Strong Rule" },
+      "green": { "role": "primary", "displayName": "Green" },
+      "brick": { "displayName": "Brick" },
+      "field": { "role": "neutral", "displayName": "Field" },
+      "flash": { "displayName": "Changed Row Tint" },
+      "control-hover": { "role": "neutral", "displayName": "Control Hover" },
+      "primary-hover": { "role": "primary", "displayName": "Primary Hover" },
+      "danger-hover": { "displayName": "Danger Hover" },
+      "field-border": { "role": "neutral", "displayName": "Field Border" },
+      "project-selected": { "role": "neutral", "displayName": "Selected Project" }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Project Title", "purpose": "Selected project heading." },
+      "headline": { "displayName": "Section Heading", "purpose": "Section headings; size also used for table totals." },
+      "brand": { "displayName": "App Name", "purpose": "Top bar h1." },
+      "body": { "displayName": "Body", "purpose": "Thai prose, controls and exact tabular money." },
+      "label": { "displayName": "Field Label", "purpose": "General form labels and table column headings." },
+      "supporting": { "displayName": "Supporting", "purpose": "Hints, metadata and refresh status." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Source --ease; background state changes." },
+      { "name": "control-background", "value": "120ms", "purpose": "Buttons and project navigation background transition." },
+      { "name": "recalculated-background", "value": "180ms", "purpose": "Comparison rows and equation rows background transition." },
+      { "name": "changed-row-lifetime", "value": "1400ms", "purpose": "ProfitApp FLASH_MS timeout; distinct from the 180ms transition." }
+    ],
+    "breakpoints": [
+      { "name": "rail-to-select", "value": "900px" },
+      { "name": "stack-tables", "value": "720px" }
+    ],
+    "focus": [
+      { "name": "keyboard-outline", "value": "outline: 2px solid var(--green); outline-offset: 2px;", "purpose": "Global :focus-visible; main has outline:none as a programmatic skip target." },
+      { "name": "record-form", "value": "scrollIntoView({block:'start',behavior:'auto'}); focus({preventScroll:true})", "purpose": "Typed record action focuses minutes/amount in the selected inline form." },
+      { "name": "invalid-field", "value": "first invalid data-field receives focus", "purpose": "EntryForm validation; errors remain linked via aria-describedby." }
+    ],
+    "responsive": {
+      "desktop": "280px minmax(0, 1fr) grid; sheet max-width 68rem; main padding 1rem 1.5rem 3rem.",
+      "rail-to-select": "@media (max-width: 900px): one-column shell, project list replaced by labeled select, main padding 1rem, equation rows one column.",
+      "stack-tables": "@media (max-width: 720px): stack-table cells paired with data-label; thead visually hidden; form grid one column.",
+      "reduced-motion": "@media (prefers-reduced-motion: reduce): row/control transitions none; flash background transparent."
+    },
+    "sourcePaths": [
+      "DESIGN.md",
+      "apps/web/app/globals.css",
+      "apps/web/app/layout.tsx",
+      "apps/web/app/page.tsx",
+      "apps/web/components/profit-app.tsx",
+      "apps/web/components/comparison.tsx",
+      "apps/web/components/transactions.tsx",
+      "apps/web/components/ui.tsx",
+      "apps/web/lib/money.ts",
+      "PRODUCT.md",
+      ".impeccable/surfaces/apps-web-components-profit-app-tsx.md",
+      ".impeccable/review/desktop.png"
+    ],
+    "extraction": {
+      "authority": "Current source; code-led Profit Diff fallback, seed ebd4384d, unconfirmed aesthetic.",
+      "screenshots": "desktop.png sampled for material/composition; synthetic fixture, not live customer data. Other supplied captures were not re-opened in this bounded pass.",
+      "scope": "Documentation only. Three material fixes resolved with scoped SHIP; automated verification is separate from design-system evidence. No live OIDC/cloud deployment validation.",
+      "tonalRamps": "Omitted: source defines no eight-step ramps; no synthesized colors are normative.",
+      "rasterAssets": "No shipping raster assets per handoff; external quality references/PNG mocks excluded.",
+      "notCanonized": "Surface FIRST VIEWPORT action placement predates the implemented typed action before the table; brief left unchanged. No craft-floor defect observed in the bounded sample; not a comprehensive audit."
+    }
+  },
+  "components": [
+    {
+      "name": "Outlined Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Secondary actions and GET retry.",
+      "html": "<button type=\"button\" class=\"ds-button\">โหลดผลรวมอีกครั้ง</button>",
+      "css": ".ds-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.5rem;padding:0.35rem 0.9rem;border:1px solid var(--ink,#17211b);border-radius:3px;background:transparent;color:var(--ink,#17211b);font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;font-weight:500;text-decoration:none;cursor:pointer;transition:background-color 120ms var(--ease,cubic-bezier(0.16,1,0.3,1))}.ds-button:hover:not(:disabled){background:#e8ece8}.ds-button:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}.ds-button:disabled{opacity:0.55;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-button{transition:none}}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Persist a record or enter its typed inline form.",
+      "html": "<button type=\"button\" class=\"ds-primary\">เพิ่มรายการ</button>",
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;min-height:2.5rem;padding:0.35rem 0.9rem;border:1px solid var(--green,#256447);border-radius:3px;background:var(--green,#256447);color:#fff;font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;font-weight:500;cursor:pointer;transition:background-color 120ms var(--ease,cubic-bezier(0.16,1,0.3,1))}.ds-primary:hover:not(:disabled){background:#1d5039}.ds-primary:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}.ds-primary:disabled{opacity:0.55;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Inline delete confirmation, not a generic negative metric.",
+      "html": "<button type=\"button\" class=\"ds-danger\">ยืนยันลบ</button>",
+      "css": ".ds-danger{display:inline-flex;align-items:center;justify-content:center;min-height:2.5rem;padding:0.35rem 0.9rem;border:1px solid var(--brick,#a33a37);border-radius:3px;background:transparent;color:var(--brick,#a33a37);font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;font-weight:500;cursor:pointer;transition:background-color 120ms var(--ease,cubic-bezier(0.16,1,0.3,1))}.ds-danger:hover:not(:disabled){background:#f4e5e4}.ds-danger:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}.ds-danger:disabled{opacity:0.55;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-danger{transition:none}}"
+    },
+    {
+      "name": "Money Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Associated Thai label and currency; invalid state retains a readable explanation.",
+      "html": "<div class=\"ds-field\"><label for=\"ds-amount\">จำนวนเงิน (THB)</label><input id=\"ds-amount\" inputmode=\"decimal\" aria-describedby=\"ds-hint\"><p id=\"ds-hint\" class=\"ds-hint\">ใช้จุดเป็นทศนิยม ไม่ต้องใส่จุลภาค</p></div>",
+      "css": ".ds-field{min-width:0;font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;color:var(--ink,#17211b)}.ds-field label{display:block;font-weight:600;font-size:0.9375rem;margin-bottom:0.2rem}.ds-field input{width:100%;min-height:2.5rem;padding:0.35rem 0.6rem;border:1px solid #6c7a71;border-radius:3px;background:var(--field,#fff);color:var(--ink,#17211b);font:inherit}.ds-field input:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}.ds-field input[aria-invalid='true']{border-color:var(--brick,#a33a37);border-width:2px}.ds-hint{color:var(--muted,#4a5850);font-size:0.875rem;margin:0.15rem 0 0}.ds-field-error{color:var(--brick,#a33a37);font-size:0.875rem;font-weight:600;margin:0.2rem 0 0}"
+    },
+    {
+      "name": "Project Navigation",
+      "kind": "nav",
+      "refersTo": "project-navigation",
+      "description": "Desktop project selection; synthetic preview text, mobile uses the native select.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"โปรเจกต์\"><ul><li><button type=\"button\" aria-current=\"true\"><span class=\"ds-project-name\">SYNTHETIC โปรเจกต์ตัวอย่าง</span><span class=\"ds-project-meta\">SYNTHETIC Client · THB</span></button></li></ul></nav>",
+      "css": ".ds-nav{font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;color:var(--ink,#17211b)}.ds-nav ul{list-style:none;margin:0 0 0.75rem;padding:0}.ds-nav li+li{border-top:1px solid var(--rule,#c9d0ca)}.ds-nav button{display:block;width:100%;text-align:left;padding:0.6rem 0.5rem;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;transition:background-color 120ms var(--ease,cubic-bezier(0.16,1,0.3,1))}.ds-nav button:hover{background:#e8ece8}.ds-nav button[aria-current='true']{background:#dbe5dd;color:var(--green,#256447);font-weight:700}.ds-nav button:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}.ds-project-name{display:block;overflow-wrap:anywhere}.ds-project-meta{display:block;font-size:0.875rem;color:var(--muted,#4a5850);font-weight:400}@media(prefers-reduced-motion:reduce){.ds-nav button{transition:none}}"
+    },
+    {
+      "name": "Transaction Tabs",
+      "kind": "nav",
+      "refersTo": "transaction-tab",
+      "description": "Underlined type selection; preview is static HTML, keyboard behavior lives in Transactions.",
+      "html": "<div class=\"ds-tabs\" role=\"tablist\" aria-label=\"ประเภทรายการ\"><button type=\"button\" role=\"tab\" aria-selected=\"true\">เวลาทำงาน</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">ค่าใช้จ่าย</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">เงินที่ได้รับ</button></div>",
+      "css": ".ds-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule-strong,#17211b);margin-bottom:1rem;overflow-x:auto;font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6}.ds-tabs [role='tab']{min-height:2.75rem;padding:0.4rem 1rem;border:0;border-bottom:3px solid transparent;background:transparent;color:var(--muted,#4a5850);font:inherit;font-weight:500;cursor:pointer;white-space:nowrap}.ds-tabs [role='tab'][aria-selected='true']{color:var(--ink,#17211b);font-weight:700;border-bottom-color:var(--green,#256447)}.ds-tabs [role='tab']:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}"
+    },
+    {
+      "name": "Stale Notice",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "Retained figures are stale; reload is a GET-only action in the app.",
+      "html": "<div role=\"alert\" class=\"ds-notice\"><strong>ตัวเลขโปรเจกต์ที่แสดงอยู่เป็นค่าเก่า (STALE) ยังไม่ใช่ผลล่าสุด</strong><p>โหลดข้อมูลใหม่ไม่สำเร็จ</p><p><button type=\"button\" class=\"ds-retry\">โหลดผลรวมอีกครั้ง</button></p></div>",
+      "css": ".ds-notice{border:1px solid var(--brick,#a33a37);background:var(--field,#fff);padding:0.6rem 0.8rem;margin:0.5rem 0;max-width:72ch;font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;color:var(--ink,#17211b)}.ds-notice strong{color:var(--brick,#a33a37)}.ds-notice p{margin:0.25rem 0 0}.ds-retry{display:inline-flex;align-items:center;justify-content:center;min-height:2.5rem;padding:0.35rem 0.9rem;border:1px solid var(--ink,#17211b);border-radius:3px;background:transparent;color:var(--ink,#17211b);font:inherit;font-weight:500;cursor:pointer;transition:background-color 120ms var(--ease,cubic-bezier(0.16,1,0.3,1))}.ds-retry:hover:not(:disabled){background:#e8ece8}.ds-retry:focus-visible{outline:2px solid var(--green,#256447);outline-offset:2px}.ds-retry:disabled{opacity:0.55;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-retry{transition:none}}"
+    },
+    {
+      "name": "Profit Comparison",
+      "kind": "custom",
+      "description": "Synthetic total-row preview of the ruled comparison; data-label survives narrow screens.",
+      "html": "<section class=\"ds-sheet\"><p class=\"ds-fixture\">SYNTHETIC preview · สกุลเงิน THB</p><table class=\"ds-diff\"><caption>เปรียบเทียบสัญญากับเงินที่ได้รับจริง</caption><thead><tr><th scope=\"col\">รายการ</th><th scope=\"col\">ตามสัญญา</th><th scope=\"col\">ได้รับจริง</th></tr></thead><tbody><tr class=\"ds-total\"><th scope=\"row\">กำไร</th><td data-label=\"ตามสัญญา (กำไรคาดการณ์)\"><span class=\"ds-num ds-gain\">+1,000.00 THB</span></td><td data-label=\"ได้รับจริง (กำไรจริง)\"><span class=\"ds-num ds-loss\">−500.00 THB</span></td></tr></tbody></table></section>",
+      "css": ".ds-sheet{margin:0 0 2rem;max-width:68rem;background:var(--paper,#f6f7f5);color:var(--ink,#17211b);font-family:'Noto Sans Thai Variable','Noto Sans Thai',system-ui,sans-serif;font-size:1rem;line-height:1.6;font-variant-numeric:tabular-nums lining-nums}.ds-fixture{color:var(--muted,#4a5850);font-size:0.875rem;margin:0 0 0.5rem}.ds-diff{width:100%;border-collapse:collapse}.ds-diff caption{text-align:left}.ds-diff th,.ds-diff td{padding:0.55rem 0.75rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--rule,#c9d0ca)}.ds-diff thead th{border-bottom:1px solid var(--rule-strong,#17211b);font-size:0.9375rem;font-weight:600}.ds-diff td,.ds-diff thead th:not(:first-child){text-align:right}.ds-diff .ds-total th,.ds-diff .ds-total td{font-weight:700;font-size:1.125rem;border-top:1px solid var(--rule-strong,#17211b);border-bottom:1px solid var(--rule-strong,#17211b)}.ds-diff tr{transition:background-color 180ms var(--ease,cubic-bezier(0.16,1,0.3,1))}.ds-flash{background-color:var(--flash,rgba(37,100,71,0.16))}.ds-num{font-variant-numeric:tabular-nums lining-nums;white-space:nowrap}.ds-gain{color:var(--green,#256447)}.ds-loss{color:var(--brick,#a33a37)}.ds-sheet[data-stale='true'] .ds-diff{border-top:2px dashed var(--brick,#a33a37)}@media(max-width:720px){.ds-diff,.ds-diff tbody,.ds-diff tr,.ds-diff th,.ds-diff td{display:block;width:100%}.ds-diff thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.ds-diff tr{border-bottom:1px solid var(--rule-strong,#17211b);padding:0.5rem 0}.ds-diff th[scope='row']{padding:0.25rem;border:0;font-weight:700}.ds-diff td{display:flex;justify-content:space-between;gap:1rem;padding:0.25rem;border:0;text-align:right}.ds-diff td::before{content:attr(data-label);font-weight:500;color:var(--muted,#4a5850);text-align:left;flex:0 1 50%}.ds-diff .ds-total th,.ds-diff .ds-total td{border:0}.ds-diff .ds-total{border-top:1px solid var(--rule-strong,#17211b)}}@media(prefers-reduced-motion:reduce){.ds-diff tr{transition:none}.ds-flash{background-color:transparent}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Profit Diff (implemented; unconfirmed)",
+    "overview": "ระบบที่สกัดจากโค้ดจริง: กระดาษขาวอมเทา เส้นแบ่งชัด ตัวเลขอ่านเทียบกันได้ และฟอร์มภาษาไทยในลำดับเอกสาร ไม่ใช่ชุด metric cards แยกขาดจากสมการ ชื่อ Profit Diff เป็น code-led fallback จาก surface brief (seed `ebd4384d`); ยังไม่มี approved comp หรือ aesthetic approval\n\nเอกสารนี้บันทึก visual system ไม่ยืนยันการทำงาน production ทั้งระบบ การแก้ material findings สามรายการได้รับ scoped disposition SHIP แล้ว; ผล automated checks เป็นหลักฐานแยกจาก visual system และไม่มีหลักฐาน live OIDC หรือ cloud deployment จากการตรวจครั้งนี้",
+    "keyCharacteristics": [
+      "Thai-first, self-hosted Noto Sans Thai.",
+      "Flat ruled sheets; compact outlined controls.",
+      "Exact signed money, currency context, and visible equations.",
+      "Inline forms, visible keyboard focus, explicit stale recovery."
+    ],
+    "rules": [
+      { "name": "The Signed Result Rule", "body": "ผลบวก/ลบต้องมีเครื่องหมายและสกุลเงินควบคู่สี; สีเพียงอย่างเดียวไม่ใช่ข้อมูล", "section": "colors" },
+      { "name": "The Exact Number Rule", "body": "ใช้ `tabular-nums lining-nums` และไม่ตัดบรรทัดภายในค่าเงิน; format ผ่าน BigInt minor-unit strings ไม่แปลงจำนวนเงินเป็น Number สกุลเงินติดอยู่กับค่า และ unknown ไม่ถูกแทนด้วยศูนย์", "section": "typography" },
+      { "name": "The Ruled Sheet Rule", "body": "ใช้เส้นแบ่งเพื่อให้เทียบค่าและอ่านสมการได้ ไม่ยกทุก section เป็นกล่องมีเงา", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** คง label ภาษาไทย, สกุลเงิน และเครื่องหมายผลลัพธ์ควบคู่สี",
+      "**Do** รักษาเส้นแบ่งและ numeric alignment รวมถึง data-label เมื่อ table stack",
+      "**Do** ใช้ inline form, visible focus และข้อความ loading/error/stale ที่บอกขั้นตอนกู้คืน",
+      "**Do** แยก persisted write ออกจาก canonical totals refresh และเคารพ reduced motion"
+    ],
+    "donts": [
+      "**Don't** รวมต่างสกุลเงิน หรือแสดงค่า unknown/ไม่มีตัวหารเวลาเป็นศูนย์",
+      "**Don't** แทนสมการด้วย KPI cards ที่ตัดบริบทสัญญากับเงินรับจริงออก",
+      "**Don't** ยืนยันยอดล่าสุดจาก write success ก่อน canonical GET สำเร็จ หรือ retry write จากปุ่มโหลดผลรวม",
+      "**Don't** อ้างว่า fallback aesthetic, synthetic screenshots หรือ scoped SHIP คือ aesthetic approval หรือ production deployment"
+    ]
+  }
+}
