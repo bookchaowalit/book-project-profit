@@ -97,14 +97,14 @@ class JWKSCache:
                 self._attempted_at = now
                 try:
                     self._keys = self._fetch()
-                    self._fetched_at = now
+                    self._fetched_at = self._clock()
                     self._refresh_failed = False
                 except JWKSUnavailable:
                     log.warning("jwks_fetch_failed")
                     self._refresh_failed = True
             if not self._keys:
                 raise JWKSUnavailable
-            age = now - self._fetched_at
+            age = self._clock() - self._fetched_at
             usable = age < ttl or (self._refresh_failed and age < ttl + MAX_STALE_SECONDS)
             if not usable:
                 raise JWKSUnavailable

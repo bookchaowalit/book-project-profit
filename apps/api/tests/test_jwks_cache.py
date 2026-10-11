@@ -86,6 +86,36 @@ def test_recovery_after_outage() -> None:
     assert cache.get("k1") is not None
 
 
+def test_failed_refresh_crossing_grace_deadline_refuses_key() -> None:
+    cache, clock, _ = make(ttl=60, refresh=10)
+    cache.get("k1")
+    clock.t = 1000 + 60 + auth.MAX_STALE_SECONDS - 1
+
+    def slow_failure() -> dict[str, Any]:
+        clock.t += 2
+        raise JWKSUnavailable
+
+    cache._fetch = slow_failure  # type: ignore[method-assign]
+    for _ in range(2):
+        with pytest.raises(JWKSUnavailable):
+            cache.get("k1")
+
+
+def test_successful_fetch_starts_ttl_at_completion() -> None:
+    cache, clock, _ = make(ttl=60)
+    key = object()
+
+    def slow_success() -> dict[str, Any]:
+        clock.t += 2
+        return {"k1": key}
+
+    cache._fetch = slow_success  # type: ignore[method-assign]
+    assert cache.get("k1") is key
+    clock.t += 59
+    assert cache.get("k1") is key
+    assert clock.t == 1061
+
+
 def test_unknown_kid_with_healthy_provider_is_keyerror() -> None:
     cache, clock, _ = make()
     cache.get("k1")
