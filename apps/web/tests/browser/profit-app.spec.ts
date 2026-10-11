@@ -66,6 +66,37 @@ test('creates a project via the form', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 2, name: 'SYNTHETIC ใหม่' })).toBeVisible();
 });
 
+test('visibly marks retained totals stale after a saved payment and retries reads only', async ({ page }, info) => {
+  const api = await open(page);
+  const projectRead = '**/api/profit/workspaces/ws-synthetic-1/projects/pr-1';
+  const overviewRead = '**/api/profit/workspaces/ws-synthetic-1/summary';
+  const unavailable = {
+    status: 503,
+    contentType: 'application/json',
+    body: JSON.stringify({ error: { code: 'service_unavailable', message: 'synthetic outage', request_id: 'synthetic-stale' } }),
+  };
+  await page.route(projectRead, (route) => route.fulfill(unavailable));
+  await page.route(overviewRead, (route) => route.fulfill(unavailable));
+  await page.getByRole('tab', { name: 'เงินที่ได้รับ' }).click();
+  await page.getByLabel(/จำนวนเงิน/).fill('5000.50');
+  await page.getByRole('button', { name: 'บันทึกเงินที่ได้รับ' }).click();
+  const stale = page.locator('[data-stale-notice]');
+  await expect(stale).toHaveCount(2);
+  for (const notice of await stale.all()) {
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText('STALE');
+  }
+  await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
+  await page.screenshot({ path: `test-results/${info.project.name}-stale.png`, fullPage: true });
+  await page.unroute(projectRead);
+  await page.unroute(overviewRead);
+  await page.getByRole('button', { name: 'โหลดผลรวมอีกครั้ง' }).first().click();
+  await page.getByRole('button', { name: 'โหลดผลรวมอีกครั้ง' }).click();
+  await expect(stale).toHaveCount(0);
+  await expect(page.locator('[data-eq="actual"]')).toContainText('+5,000.50 THB');
+  expect(api.log.filter((entry) => entry.method === 'POST')).toHaveLength(1);
+});
+
 test('recording action is inside the first viewport and moves focus to the chosen inline form', async ({ page }) => {
   await open(page);
   const viewport = page.viewportSize()!;

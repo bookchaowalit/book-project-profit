@@ -222,7 +222,7 @@ export function ProfitApp({ displayName }: { displayName: string }) {
             ) : null}
           </div>
           {projects.loading ? <Loading label="กำลังโหลดโปรเจกต์…" /> : null}
-          {projects.error && projects.items.length === 0 ? <ErrorNotice error={projects.error} /> : null}
+          {projects.error && projects.items.length === 0 ? <ErrorNotice error={projects.error} onRetry={projects.reload} /> : null}
           {projects.items.length > 0 ? (
             <>
               <label htmlFor="project-select" className="project-select-label">
@@ -256,11 +256,14 @@ export function ProfitApp({ displayName }: { displayName: string }) {
             </p>
           ) : null}
           {projects.error && projects.items.length > 0 ? (
-            <ErrorNotice error={projects.error} />
+            <>
+              <p className="muted small">รายการโปรเจกต์ที่แสดงอาจไม่ล่าสุด (โหลดใหม่ไม่สำเร็จ)</p>
+              <ErrorNotice error={projects.error} onRetry={projects.reload} />
+            </>
           ) : null}
           {projects.moreError ? <ErrorNotice error={projects.moreError} onRetry={projects.loadMore} /> : null}
           {projects.total > projects.items.length ? (
-            <button type="button" className="button" onClick={projects.loadMore} disabled={projects.loadingMore}>
+            <button type="button" className="button" onClick={projects.loadMore} disabled={projects.loadingMore || projects.refreshing}>
               {projects.loadingMore ? 'กำลังโหลด…' : `โหลดโปรเจกต์เพิ่ม (เหลือ ${projects.total - projects.items.length})`}
             </button>
           ) : null}

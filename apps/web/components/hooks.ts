@@ -82,6 +82,7 @@ export const PAGE_SIZE = 50;
 /** Offset pagination that never pretends a partial list is complete. */
 export function usePaged<T extends { id: string }>(path: string | null, refresh: number) {
   const [state, setState] = useState<PagedState<T>>({ key: '', items: [], total: 0, loading: path !== null, loadingMore: false });
+  const [tick, setTick] = useState(0);
   const controller = useRef<AbortController | null>(null);
   const pathRef = useRef(path);
   pathRef.current = path;
@@ -94,23 +95,31 @@ export function usePaged<T extends { id: string }>(path: string | null, refresh:
     controller.current?.abort();
     const c = new AbortController();
     controller.current = c;
-    setState((s) => (s.key === path ? { ...s, loading: true, error: undefined } : { key: path, items: [], total: 0, loading: true, loadingMore: false }));
+    setState((s) =>
+      s.key === path
+        ? { ...s, loading: true, loadingMore: false, error: undefined, moreError: undefined }
+        : { key: path, items: [], total: 0, loading: true, loadingMore: false },
+    );
     apiRequest<Page<T>>(`${path}?limit=${PAGE_SIZE}&offset=0`, { signal: c.signal }).then(
       (page) => {
         if (!c.signal.aborted) setState({ key: path, items: page.items, total: page.total, loading: false, loadingMore: false });
       },
       (error) => {
         if (c.signal.aborted || isAbort(error)) return;
-        setState((s) => ({ ...s, key: path, loading: false, error: toApiError(error) }));
+        setState((s) => ({ ...s, key: path, loading: false, loadingMore: false, error: toApiError(error) }));
       },
     );
     return () => c.abort();
-  }, [path, refresh]);
+  }, [path, refresh, tick]);
 
   const countRef = useRef(0);
+  const guard = useRef({ busy: false });
+  const reload = useCallback(() => setTick((t) => t + 1), []);
   const loadMore = useCallback(() => {
     const p = pathRef.current;
-    if (p === null) return;
+    // Never race a canonical first-page refresh (or another page request) with an append.
+    if (p === null || guard.current.busy) return;
+    guard.current.busy = true;
     const c = new AbortController();
     controller.current?.abort();
     controller.current = c;
@@ -133,14 +142,16 @@ export function usePaged<T extends { id: string }>(path: string | null, refresh:
 
   const current = path !== null && state.key === path ? state : null;
   countRef.current = current?.items.length ?? 0;
+  guard.current.busy = !current || current.loading || current.loadingMore;
   return {
     items: current?.items ?? [],
     total: current?.total ?? 0,
     loading: path !== null && (current === null || current.loading) && (current?.items.length ?? 0) === 0,
-    refreshing: current?.loading ?? false,
+    refreshing: !current || current.loading,
     loadingMore: current?.loadingMore ?? false,
     error: current?.error,
     moreError: current?.moreError,
     loadMore,
+    reload,
   };
 }

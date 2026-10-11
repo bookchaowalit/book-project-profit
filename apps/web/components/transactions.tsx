@@ -5,7 +5,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { ApiError } from '@/lib/api-client';
 import type { Entry, EntryKind, Expense, Payment, TimeEntry } from '@/lib/api-types';
 import { emptyDraft, validateEntry, type EntryDraft, type FieldErrors } from '@/lib/forms';
-import { createIdempotencyTracker } from '@/lib/idempotency';
+import { createIdempotencyTracker, type IdempotencyTracker } from '@/lib/idempotency';
 import { formatMinutes, formatMoney, type Currency } from '@/lib/money';
 import { usePaged, toApiError } from './hooks';
 import { ErrorNotice, Field, Loading } from './ui';
@@ -69,6 +69,40 @@ export function Transactions({ kind, onKind: setKind, focusRequest, ...props }: 
   const sectionRef = useRef<HTMLElement>(null);
   const uid = useId();
 
+  // Submission state lives here (not in the per-tab form) so switching tabs can neither
+  // lose the idempotency key of a failed submission nor skip completion of a pending one.
+  const trackers = useRef<Partial<Record<EntryKind, IdempotencyTracker>>>({});
+  const inFlight = useRef<Set<EntryKind>>(new Set());
+  const [busy, setBusy] = useState<Partial<Record<EntryKind, boolean>>>({});
+  const [failures, setFailures] = useState<Partial<Record<EntryKind, ApiError | null>>>({});
+  const latest = useRef(props);
+  latest.current = props;
+
+  async function submit(k: EntryKind, submitted: EntryDraft, body: Record<string, unknown>) {
+    if (inFlight.current.has(k)) return;
+    inFlight.current.add(k);
+    const tracker = (trackers.current[k] ??= createIdempotencyTracker());
+    const { basePath } = latest.current;
+    setBusy((b) => ({ ...b, [k]: true }));
+    setFailures((f) => ({ ...f, [k]: null }));
+    const key = tracker.keyFor(JSON.stringify([basePath, k, body]));
+    try {
+      await apiRequest(`${basePath}/${k}`, { method: 'POST', body, idempotencyKey: key });
+      tracker.succeeded();
+      // Clear only what was submitted; keep edits the user made while the request was pending.
+      setDrafts((all) => (all[k] === submitted ? { ...all, [k]: { ...emptyDraft(), date: submitted.date } } : all));
+      latest.current.onSaved('บันทึกรายการแล้ว');
+    } catch (error) {
+      const apiError = toApiError(error);
+      if (apiError.code === 'idempotency_conflict') tracker.reset();
+      setFailures((f) => ({ ...f, [k]: apiError }));
+      latest.current.onError(apiError);
+    } finally {
+      inFlight.current.delete(k);
+      setBusy((b) => ({ ...b, [k]: false }));
+    }
+  }
+
   useEffect(() => {
     if (focusRequest === 0) return;
     const form = sectionRef.current?.querySelector<HTMLFormElement>('form.entry-form');
@@ -121,7 +155,11 @@ export function Transactions({ kind, onKind: setKind, focusRequest, ...props }: 
             label={tab.add}
             draft={drafts[kind]}
             setDraft={(d) => setDrafts((all) => ({ ...all, [kind]: d }))}
-            {...props}
+            currency={props.currency}
+            defaultHourlyHint={props.defaultHourlyHint}
+            busy={!!busy[kind]}
+            failure={failures[kind] ?? null}
+            onSubmit={submit}
           />
         ) : (
           <p className="muted">บทบาทของคุณในเวิร์กสเปซนี้อ่านได้อย่างเดียว จึงไม่มีฟอร์มบันทึก</p>
@@ -137,59 +175,41 @@ function EntryForm({
   label,
   draft,
   setDraft,
-  basePath,
   currency,
   defaultHourlyHint,
-  onSaved,
-  onError,
-}: Props & { kind: EntryKind; label: string; draft: EntryDraft; setDraft: (d: EntryDraft) => void }) {
+  busy,
+  failure,
+  onSubmit,
+}: {
+  kind: EntryKind;
+  label: string;
+  draft: EntryDraft;
+  setDraft: (d: EntryDraft) => void;
+  currency: Currency;
+  defaultHourlyHint: string;
+  busy: boolean;
+  failure: ApiError | null;
+  onSubmit: (kind: EntryKind, draft: EntryDraft, body: Record<string, unknown>) => void;
+}) {
   const uid = useId();
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [failure, setFailure] = useState<ApiError | null>(null);
-  const [busy, setBusy] = useState(false);
-  const tracker = useRef(createIdempotencyTracker());
-  const mounted = useRef(true);
   const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
 
   const set = (key: keyof EntryDraft) => (value: string) => setDraft({ ...draft, [key]: value });
   const textLabel = kind === 'expenses' ? 'รายละเอียด' : 'หมายเหตุ (ไม่บังคับ)';
 
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
     const result = validateEntry(kind, draft, currency);
     if (!result.ok) {
       setErrors(result.errors);
-      setFailure(null);
       const first = Object.keys(result.errors)[0];
       requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>(`[data-field="${first}"]`)?.focus());
       return;
     }
     setErrors({});
-    setBusy(true);
-    setFailure(null);
-    const key = tracker.current.keyFor(JSON.stringify([basePath, kind, result.body]));
-    try {
-      await apiRequest(`${basePath}/${kind}`, { method: 'POST', body: result.body, idempotencyKey: key });
-      tracker.current.succeeded();
-      if (!mounted.current) return;
-      setDraft({ ...emptyDraft(), date: draft.date });
-      onSaved('บันทึกรายการแล้ว');
-    } catch (error) {
-      if (!mounted.current) return;
-      const apiError = toApiError(error);
-      if (apiError.code === 'idempotency_conflict') tracker.current.reset();
-      setFailure(apiError);
-      onError(apiError);
-    } finally {
-      if (mounted.current) setBusy(false);
-    }
+    onSubmit(kind, draft, result.body);
   }
 
   const input = (name: keyof EntryDraft, props: Record<string, unknown>) => ({
@@ -238,38 +258,40 @@ function History({ kind, noun, basePath, currency, canWrite, refresh, onSaved, o
   const [confirming, setConfirming] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [failure, setFailure] = useState<ApiError | null>(null);
-  const mounted = useRef(true);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
 
   async function remove(id: string) {
     setDeleting(id);
     setFailure(null);
     try {
       await apiRequest(`${basePath}/${kind}/${encodeURIComponent(id)}`, { method: 'DELETE' });
-      if (!mounted.current) return;
       setConfirming(null);
+      // Canonical refetch must happen even if the user switched tabs while the delete was pending.
       onSaved('ลบรายการแล้ว');
     } catch (error) {
-      if (!mounted.current) return;
       const apiError = toApiError(error);
       setFailure(apiError);
       onError(apiError);
     } finally {
-      if (mounted.current) setDeleting(null);
+      setDeleting(null);
     }
   }
 
   if (list.loading) return <Loading label={`กำลังโหลดรายการ${noun}…`} />;
-  if (list.error && list.items.length === 0) return <ErrorNotice error={list.error} />;
+  if (list.error && list.items.length === 0) return <ErrorNotice error={list.error} onRetry={list.reload} />;
   const remaining = list.total - list.items.length;
   return (
-    <div className="history">
-      {list.error ? <ErrorNotice error={list.error} /> : null}
+    <div className="history" aria-busy={list.refreshing}>
+      {list.error ? (
+        <div role="alert" className="notice notice-error">
+          <strong>รายการที่แสดงอาจไม่ล่าสุด</strong>
+          <p>โหลดรายการใหม่ไม่สำเร็จ รายการด้านล่างเป็นค่าเก่า ลองโหลดอีกครั้ง (ไม่บันทึกซ้ำ)</p>
+          <p>
+            <button type="button" className="button" onClick={list.reload}>
+              โหลดรายการอีกครั้ง
+            </button>
+          </p>
+        </div>
+      ) : null}
       {failure ? <ErrorNotice error={failure} /> : null}
       {list.items.length === 0 ? (
         <p className="empty">ยังไม่มีรายการ{noun} {canWrite ? 'กรอกฟอร์มด้านบนเพื่อบันทึกรายการแรก' : ''}</p>
@@ -320,7 +342,7 @@ function History({ kind, noun, basePath, currency, canWrite, refresh, onSaved, o
       {list.moreError ? <ErrorNotice error={list.moreError} onRetry={list.loadMore} /> : null}
       {remaining > 0 ? (
         <p>
-          <button type="button" className="button" onClick={list.loadMore} disabled={list.loadingMore}>
+          <button type="button" className="button" onClick={list.loadMore} disabled={list.loadingMore || list.refreshing}>
             {list.loadingMore ? 'กำลังโหลด…' : `โหลดเพิ่ม (เหลือ ${remaining})`}
           </button>
         </p>

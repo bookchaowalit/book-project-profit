@@ -91,6 +91,91 @@ describe('ProfitApp', () => {
     await waitFor(() => expect(screen.getByText(/โหลดผลรวมล่าสุดสำเร็จ/, { selector: 'p.sr-only' })).toBeInTheDocument());
   });
 
+  it('keeps the same idempotency key across tab switches after a committed write with a lost response (one persisted entry)', async () => {
+    const user = await ready();
+    const inner = globalThis.fetch;
+    let lose = true;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const response = await inner(input, init);
+      if (lose && init.method === 'POST' && String(input).endsWith('/payments')) {
+        lose = false;
+        throw new TypeError('network down after commit'); // server committed, client never saw the response
+      }
+      return response;
+    });
+    await user.click(screen.getByRole('tab', { name: 'เงินที่ได้รับ' }));
+    await user.type(screen.getByLabelText(/จำนวนเงิน/), '100');
+    await user.click(screen.getByRole('button', { name: 'บันทึกเงินที่ได้รับ' }));
+    await screen.findByRole('button', { name: /บันทึกเงินที่ได้รับ อีกครั้ง/ });
+    await user.click(screen.getByRole('tab', { name: 'ค่าใช้จ่าย' }));
+    await user.click(screen.getByRole('tab', { name: 'เงินที่ได้รับ' }));
+    expect(screen.getByLabelText(/จำนวนเงิน/)).toHaveValue('100');
+    await user.click(screen.getByRole('button', { name: /บันทึกเงินที่ได้รับ อีกครั้ง/ }));
+    await waitFor(() => expect(screen.getByRole('table', { name: /รายการเงินที่ได้รับ/ })).toBeInTheDocument());
+    const posts = api.log.filter((l) => l.method === 'POST');
+    expect(posts).toHaveLength(2);
+    expect(posts[1]!.key).toBe(posts[0]!.key);
+    const rows = within(screen.getByRole('table', { name: /รายการเงินที่ได้รับ/ })).getAllByRole('row');
+    expect(rows).toHaveLength(2); // header + exactly one persisted payment
+  });
+
+  it('completes a write whose tab changed while the POST was held: clears that draft and refetches canonical totals', async () => {
+    const user = await ready();
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    api.hooks.gate = (path) => (!path.includes('?') && path.endsWith('/payments') ? held : undefined);
+    await user.click(screen.getByRole('tab', { name: 'เงินที่ได้รับ' }));
+    await user.type(screen.getByLabelText(/จำนวนเงิน/), '100');
+    await user.click(screen.getByRole('button', { name: 'บันทึกเงินที่ได้รับ' }));
+    await waitFor(() => expect(api.log.some((l) => l.method === 'POST')).toBe(true));
+    await user.click(screen.getByRole('tab', { name: 'ค่าใช้จ่าย' }));
+    release();
+    await waitFor(() => expect(screen.getByText(/โหลดผลรวมล่าสุดสำเร็จ/, { selector: 'p.sr-only' })).toBeInTheDocument());
+    const table = screen.getByRole('table', { name: /เปรียบเทียบสัญญากับเงินที่ได้รับจริง/ });
+    expect(within(table).getAllByText('100.00 THB').length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('tab', { name: 'เงินที่ได้รับ' }));
+    expect(screen.getByLabelText(/จำนวนเงิน/)).toHaveValue('');
+  });
+
+  it('offers an explicit GET-only retry when the first page of the project list fails', async () => {
+    const inner = globalThis.fetch;
+    let fail = true;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      if (fail && (init.method ?? 'GET') === 'GET' && /\/projects\?limit=/.test(String(input))) {
+        fail = false;
+        return new Response(JSON.stringify({ error: { code: 'service_unavailable', message: 'x', request_id: 'req-2' } }), {
+          status: 503,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return inner(input, init);
+    });
+    const user = userEvent.setup();
+    render(<ProfitApp displayName="ผู้ใช้สังเคราะห์" />);
+    await user.click(await screen.findByRole('button', { name: 'ลองอีกครั้ง' }));
+    await screen.findByRole('heading', { level: 2, name: 'SYNTHETIC เว็บไซต์ร้านกาแฟ' });
+    expect(api.log.some((l) => l.method === 'POST')).toBe(false);
+  });
+
+  it('offers an explicit GET-only retry when the first page of a history list fails', async () => {
+    const inner = globalThis.fetch;
+    let fail = true;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      if (fail && (init.method ?? 'GET') === 'GET' && /\/time-entries\?limit=/.test(String(input))) {
+        fail = false;
+        return new Response(JSON.stringify({ error: { code: 'service_unavailable', message: 'x', request_id: 'req-3' } }), {
+          status: 503,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      return inner(input, init);
+    });
+    const user = await ready();
+    await user.click(await screen.findByRole('button', { name: 'ลองอีกครั้ง' }));
+    await screen.findByText(/ยังไม่มีรายการเวลาทำงาน/);
+    expect(api.log.some((l) => l.method === 'POST')).toBe(false);
+  });
+
   it('first-viewport action selects the type and moves focus to the chosen inline form', async () => {
     const user = await ready();
     await user.selectOptions(screen.getByLabelText('ประเภทที่จะเพิ่ม'), 'expenses');

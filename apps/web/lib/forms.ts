@@ -43,13 +43,19 @@ export const emptyDraft = (): EntryDraft => ({ date: todayLocal(), minutes: '', 
 export type FieldErrors = Partial<Record<keyof EntryDraft, string>>;
 export type Validation = { ok: true; body: Record<string, unknown> } | { ok: false; errors: FieldErrors };
 
-const MAX_TEXT = 500;
+/** Bounds mirror apps/api/app/schemas.py (Name/ClientName 120, Description 300, Note 500, counted in code points). */
+export const MAX_NAME = 120;
+export const MAX_CLIENT = 120;
+export const MAX_DESCRIPTION = 300;
+export const MAX_NOTE = 500;
+export const charLength = (s: string): number => [...s].length;
 
 export function validateEntry(kind: EntryKind, draft: EntryDraft, currency: Currency): Validation {
   const errors: FieldErrors = {};
   if (!validDate(draft.date)) errors.date = 'เลือกวันที่ให้ถูกต้อง';
   const text = draft.text.trim();
-  if (text.length > MAX_TEXT) errors.text = `ยาวเกิน ${MAX_TEXT} ตัวอักษร`;
+  const maxText = kind === 'expenses' ? MAX_DESCRIPTION : MAX_NOTE;
+  if (charLength(text) > maxText) errors.text = `ยาวเกิน ${maxText} ตัวอักษร`;
   const body: Record<string, unknown> = {};
   if (kind === 'time-entries') {
     const minutes = parseMinutesInput(draft.minutes);
@@ -96,9 +102,9 @@ export function validateProject(
   const name = draft.name.trim();
   const client = draft.client.trim();
   if (!name) errors.name = 'กรอกชื่อโปรเจกต์';
-  else if (name.length > 200) errors.name = 'ชื่อยาวเกิน 200 ตัวอักษร';
+  else if (charLength(name) > MAX_NAME) errors.name = `ชื่อโปรเจกต์ยาวเกิน ${MAX_NAME} ตัวอักษร`;
   if (!client) errors.client = 'กรอกชื่อลูกค้า';
-  else if (client.length > 200) errors.client = 'ชื่อยาวเกิน 200 ตัวอักษร';
+  else if (charLength(client) > MAX_CLIENT) errors.client = `ชื่อลูกค้ายาวเกิน ${MAX_CLIENT} ตัวอักษร`;
   if (!isCurrency(draft.currency)) {
     errors.currency = 'เลือกสกุลเงิน';
     return { ok: false, errors };

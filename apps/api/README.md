@@ -113,6 +113,10 @@ Notes:
 - `client_name` may be empty; `name`/`description` must be non-blank after trim.
 - Lists default to `limit=50` (max 100); `total` is exact.
 - Workspace list is unpaginated (a user's own memberships).
+- Every GET runs in one `REPEATABLE READ`, read-only PostgreSQL transaction, so
+  metadata, totals and counts in a response come from a single snapshot (no
+  serialization retries needed; writes stay `READ COMMITTED`). `PATCH` returns
+  its own just-updated, row-locked project values with its aggregates.
 
 ## Deployment (Railway + dedicated PostgreSQL such as Neon)
 

@@ -11,7 +11,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.auth import Principal, get_principal
-from app.db import get_session
+from app.db import get_read_session, get_session
 from app.errors import AppError, not_found
 from app.models import (
     Expense,
@@ -63,7 +63,7 @@ def _created(status: int, body: dict[str, Any], replayed: bool) -> JSONResponse:
 
 @router.get("/workspaces")
 def list_workspaces(
-    principal: Principal = Depends(get_principal), session: Session = Depends(get_session)
+    principal: Principal = Depends(get_principal), session: Session = Depends(get_read_session)
 ) -> dict[str, Any]:
     rows = session.execute(
         select(Workspace.id, Workspace.name, WorkspaceMember.role)
@@ -132,7 +132,7 @@ def create_workspace(
 def workspace_summary(
     workspace_id: uuid.UUID,
     principal: Principal = Depends(get_principal),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_read_session),
 ) -> dict[str, Any]:
     require_role(session, workspace_id, principal, write=False)
     groups = workspace_totals_by_currency(session, workspace_id)
@@ -186,7 +186,7 @@ def list_projects(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0, le=10_000_000),
     principal: Principal = Depends(get_principal),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_read_session),
 ) -> dict[str, Any]:
     require_role(session, workspace_id, principal, write=False)
     total = session.scalar(
@@ -263,7 +263,7 @@ def read_project(
     workspace_id: uuid.UUID,
     project_id: uuid.UUID,
     principal: Principal = Depends(get_principal),
-    session: Session = Depends(get_session),
+    session: Session = Depends(get_read_session),
 ) -> dict[str, Any]:
     require_role(session, workspace_id, principal, write=False)
     return _single_project_out(session, get_project(session, workspace_id, project_id))
@@ -365,7 +365,7 @@ def _register(
         limit: int = Query(default=50, ge=1, le=100),
         offset: int = Query(default=0, ge=0, le=10_000_000),
         principal: Principal = Depends(get_principal),
-        session: Session = Depends(get_session),
+        session: Session = Depends(get_read_session),
     ) -> dict[str, Any]:
         require_role(session, workspace_id, principal, write=False)
         get_project(session, workspace_id, project_id)

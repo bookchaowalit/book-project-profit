@@ -46,6 +46,24 @@ describe('project validation', () => {
   it('rejects fractions for JPY contract', () => {
     expect(validateProject({ ...draft, contract: '1.5' }, 'create').ok).toBe(false);
   });
+  it('matches API length bounds: names/clients 120, expense description 300, note 500 (code points)', () => {
+    const name = (n: number) => 'ก'.repeat(n);
+    expect(validateProject({ ...draft, name: name(120) }, 'create').ok).toBe(true);
+    const longName = validateProject({ ...draft, name: name(121) }, 'create');
+    expect(!longName.ok && longName.errors.name).toMatch(/120/);
+    expect(validateProject({ ...draft, client: name(120) }, 'create').ok).toBe(true);
+    const longClient = validateProject({ ...draft, client: name(121) }, 'create');
+    expect(!longClient.ok && longClient.errors.client).toMatch(/120/);
+    const base = { ...emptyDraft(), date: '2026-02-03', amount: '1' };
+    expect(validateEntry('expenses', { ...base, text: name(300) }, 'THB').ok).toBe(true);
+    const longExpense = validateEntry('expenses', { ...base, text: name(301) }, 'THB');
+    expect(!longExpense.ok && longExpense.errors.text).toMatch(/300/);
+    expect(validateEntry('payments', { ...base, text: name(500) }, 'THB').ok).toBe(true);
+    const longNote = validateEntry('payments', { ...base, text: name(501) }, 'THB');
+    expect(!longNote.ok && longNote.errors.text).toMatch(/500/);
+    // astral characters count as one code point, like Python len()
+    expect(validateEntry('expenses', { ...base, text: '😀'.repeat(300) }, 'THB').ok).toBe(true);
+  });
 });
 
 describe('changedRows', () => {

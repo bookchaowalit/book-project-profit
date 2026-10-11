@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { apiRequest, type ApiError } from '@/lib/api-client';
 import type { Project } from '@/lib/api-types';
-import { validateProject, type ProjectDraft } from '@/lib/forms';
+import { charLength, MAX_CLIENT, MAX_NAME, validateProject, type ProjectDraft } from '@/lib/forms';
 import { createIdempotencyTracker } from '@/lib/idempotency';
 import { CURRENCIES, currencyDecimals, isCurrency, minorToDecimal, parseApiMinor } from '@/lib/money';
 import { toApiError } from './hooks';
@@ -102,10 +102,10 @@ export function ProjectForm({ mode, workspaceId, project, onDone, onCancel, onEr
     <form ref={formRef} onSubmit={submit} noValidate className="project-form" aria-label={title}>
       <div className="form-row">
         <Field id={`${uid}-name`} label="ชื่อโปรเจกต์" error={errors.name}>
-          {(a) => <input {...a} autoComplete="off" maxLength={200} {...bind('name')} />}
+          {(a) => <input {...a} autoComplete="off" maxLength={MAX_NAME} {...bind('name')} />}
         </Field>
         <Field id={`${uid}-client`} label="ชื่อลูกค้า" error={errors.client}>
-          {(a) => <input {...a} autoComplete="off" maxLength={200} {...bind('client')} />}
+          {(a) => <input {...a} autoComplete="off" maxLength={MAX_CLIENT} {...bind('client')} />}
         </Field>
         {mode === 'create' ? (
           <Field id={`${uid}-currency`} label="สกุลเงิน" hint="แต่ละโปรเจกต์ใช้สกุลเงินเดียวและเปลี่ยนภายหลังไม่ได้" error={errors.currency}>
@@ -173,8 +173,8 @@ export function WorkspaceForm({ onDone, onCancel, onError }: { onDone: (id: stri
     event.preventDefault();
     if (busy) return;
     const trimmed = name.trim();
-    if (!trimmed || trimmed.length > 200) {
-      setError(trimmed ? 'ชื่อยาวเกิน 200 ตัวอักษร' : 'กรอกชื่อเวิร์กสเปซ');
+    if (!trimmed || charLength(trimmed) > MAX_NAME) {
+      setError(trimmed ? `ชื่อเวิร์กสเปซยาวเกิน ${MAX_NAME} ตัวอักษร` : 'กรอกชื่อเวิร์กสเปซ');
       inputRef.current?.focus();
       return;
     }
@@ -202,7 +202,7 @@ export function WorkspaceForm({ onDone, onCancel, onError }: { onDone: (id: stri
   return (
     <form onSubmit={submit} noValidate className="workspace-form" aria-label="สร้างเวิร์กสเปซ">
       <Field id={`${uid}-ws`} label="ชื่อเวิร์กสเปซใหม่" error={error}>
-        {(a) => <input {...a} ref={inputRef} autoComplete="off" maxLength={200} value={name} onChange={(e) => setName(e.target.value)} />}
+        {(a) => <input {...a} ref={inputRef} autoComplete="off" maxLength={MAX_NAME} value={name} onChange={(e) => setName(e.target.value)} />}
       </Field>
       {failure ? <ErrorNotice error={failure} /> : null}
       <p className="inline-actions">

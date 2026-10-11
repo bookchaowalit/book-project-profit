@@ -38,3 +38,26 @@ def get_session(request: Request) -> Iterator[Session]:
         yield session
     finally:
         session.close()  # rolls back anything not committed
+
+
+def get_read_session(request: Request) -> Iterator[Session]:
+    """Session for GET handlers: one REPEATABLE READ, read-only snapshot.
+
+    Metadata, counts and financial aggregates of a response are read by several
+    statements; under READ COMMITTED a concurrent commit between them could make
+    a response contradict itself. Read-only snapshot transactions never raise
+    serialization failures, so no retry loop is needed. Writes keep READ
+    COMMITTED (their idempotency claim relies on it). The isolation level must
+    be applied before the transaction's first statement, hence it is set here.
+    """
+    factory: sessionmaker[Session] | None = request.app.state.session_factory
+    if factory is None:
+        raise AppError(503, "service_unavailable", "Database is not configured")
+    session = factory()
+    try:
+        session.connection(
+            execution_options={"isolation_level": "REPEATABLE READ", "postgresql_readonly": True}
+        )
+        yield session
+    finally:
+        session.close()
