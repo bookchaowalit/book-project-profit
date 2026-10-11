@@ -1,0 +1,34 @@
+version: "3"
+
+# `task check` is the complete, decisive API gate: lint, format check, strict
+# typecheck, then the whole pytest suite against a bundled disposable PostgreSQL
+# (pgserver). No external database, credentials or network service is used.
+tasks:
+  sync:
+    desc: Install pinned dependencies (uses uv.lock)
+    cmds:
+      - uv sync --frozen
+  lint:
+    deps: [sync]
+    cmds:
+      - uv run --frozen ruff check .
+      - uv run --frozen ruff format --check .
+  typecheck:
+    deps: [sync]
+    cmds:
+      - uv run --frozen mypy
+  test:
+    desc: Pure + real PostgreSQL integration tests
+    deps: [sync]
+    cmds:
+      - uv run --frozen pytest
+  migrate:
+    desc: Apply Alembic migrations (requires DATABASE_URL; explicit release step)
+    cmds:
+      - uv run --frozen python -m app.migrate
+  check:
+    desc: Full API gate (ruff, mypy, pytest on real PostgreSQL)
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
