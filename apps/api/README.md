@@ -49,6 +49,9 @@ request returns 503 (also during the refresh cooldown).
 Missing/invalid auth configuration fails closed: private routes return `503
 service_unavailable` (or `401` without a token). There is no development bypass
 and identity is never taken from request headers/body.
+All HTTP request bodies are capped at 64 KiB before JSON parsing, including
+chunked requests and incorrect or missing `Content-Length`. Oversized bodies
+return a sanitized 413 `validation_error` with the normal request identifier.
 
 ## OIDC setup required
 
@@ -61,6 +64,10 @@ stored per verified `(iss, sub)` in `workspace_members` (roles `owner`,
 `editor`, `viewer`; viewers are read-only). Non-members get `404`.
 Member invitation/management endpoints are **not** in this slice; additional
 members currently require a database write (see tests) — a known gap.
+Use a dedicated API audience, never the web client's ID, and restrict which
+clients can obtain that audience at the identity provider. Keep
+`AUTH_JWKS_MIN_REFRESH_SECONDS` no greater than `AUTH_JWKS_CACHE_SECONDS`;
+the settings currently validate each range separately.
 
 ## Run locally
 

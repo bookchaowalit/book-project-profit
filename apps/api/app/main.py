@@ -15,7 +15,12 @@ from sqlalchemy.orm import sessionmaker
 from app.auth import TokenVerifier
 from app.config import ConfigError, Settings
 from app.db import make_engine
-from app.errors import RequestContextMiddleware, error_body, install_error_handlers
+from app.errors import (
+    BodyLimitMiddleware,
+    RequestContextMiddleware,
+    error_body,
+    install_error_handlers,
+)
 from app.routes import router
 
 log = logging.getLogger("profit_api")
@@ -46,6 +51,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.verifier = TokenVerifier(cfg.auth, cfg.auth_error)
     install_error_handlers(app)
+    app.add_middleware(BodyLimitMiddleware)
     app.add_middleware(RequestContextMiddleware)
     app.include_router(router)
 

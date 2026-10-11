@@ -18,6 +18,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 log = logging.getLogger("profit_api")
 _REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._-]{8,64}$")
+MAX_BODY_BYTES = 64 * 1024
 
 _STATUS_CODES = {
     400: "validation_error",
@@ -26,6 +27,7 @@ _STATUS_CODES = {
     404: "not_found",
     405: "method_not_allowed",
     409: "idempotency_conflict",
+    413: "validation_error",
     422: "validation_error",
     503: "service_unavailable",
 }
@@ -109,6 +111,44 @@ class RequestContextMiddleware:
             await send({"type": "http.response.body", "body": body})
 
 
+class BodyLimitMiddleware:
+    """Bound bodies before FastAPI buffers JSON, including chunked requests."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        request = Request(scope)
+        raw_length = request.headers.get("content-length")
+        if raw_length is not None:
+            try:
+                length = int(raw_length)
+            except ValueError:
+                length = -1
+            if length < 0 or length > MAX_BODY_BYTES:
+                status = 400 if length < 0 else 413
+                message = "Invalid content length" if length < 0 else "Request body too large"
+                await _json(status, "validation_error", message, _rid(request))(
+                    scope, receive, send
+                )
+                return
+        consumed = 0
+
+        async def bounded_receive() -> Message:
+            nonlocal consumed
+            message = await receive()
+            if message["type"] == "http.request":
+                consumed += len(message.get("body", b""))
+                if consumed > MAX_BODY_BYTES:
+                    raise StarletteHTTPException(status_code=413)
+            return message
+
+        await self.app(scope, bounded_receive, send)
+
+
 def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def _app_error(request: Request, exc: AppError) -> JSONResponse:
@@ -125,9 +165,11 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def _http(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         code = _STATUS_CODES.get(exc.status_code, "http_error")
-        msg = {404: "Resource not found", 405: "Method not allowed"}.get(
-            exc.status_code, "Request failed"
-        )
+        msg = {
+            404: "Resource not found",
+            405: "Method not allowed",
+            413: "Request body too large",
+        }.get(exc.status_code, "Request failed")
         return _json(exc.status_code, code, msg, _rid(request))
 
     @app.exception_handler(OperationalError)

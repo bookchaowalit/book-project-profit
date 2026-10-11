@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 *.pyc
 *.egg-info/
+*.tsbuildinfo
 node_modules/
 .next/
 coverage/
