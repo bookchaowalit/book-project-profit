@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -34,14 +36,25 @@ class JWKSUnavailable(Exception):
 
 
 class JWKSCache:
-    """Thread-safe JWKS cache with TTL and rate-limited refresh on unknown ``kid``."""
+    """Thread-safe JWKS cache.
 
-    def __init__(self, settings: AuthSettings) -> None:
+    * Fresh: keys younger than ``jwks_cache_seconds`` are always usable (the TTL
+      may legitimately exceed MAX_STALE_SECONDS).
+    * Outage-stale: after a *failed* refresh, expired keys stay usable only until
+      ``jwks_cache_seconds + MAX_STALE_SECONDS`` old.
+    * Beyond that every call (including during the refresh cooldown) raises
+      ``JWKSUnavailable``. Age is re-checked on every return path.
+    Refresh on unknown ``kid`` is rate-limited by ``jwks_min_refresh_seconds``.
+    """
+
+    def __init__(self, settings: AuthSettings, clock: Callable[[], float] = time.monotonic) -> None:
         self._s = settings
+        self._clock = clock
         self._lock = threading.Lock()
         self._keys: dict[str, Any] = {}
         self._fetched_at = 0.0
-        self._attempted_at = 0.0
+        self._attempted_at = -math.inf
+        self._refresh_failed = False
 
     def _fetch(self) -> dict[str, Any]:
         body = b""
@@ -72,26 +85,31 @@ class JWKSCache:
         return keys
 
     def get(self, kid: str) -> Any:
-        now = time.monotonic()
         with self._lock:
-            fresh = now - self._fetched_at < self._s.jwks_cache_seconds
-            if fresh and kid in self._keys:
+            now = self._clock()
+            ttl = self._s.jwks_cache_seconds
+            if self._keys and now - self._fetched_at < ttl and kid in self._keys:
                 return self._keys[kid]
-            can_refresh = now - self._attempted_at >= self._s.jwks_min_refresh_seconds or (
-                not self._keys and now - self._attempted_at >= 1
-            )
-            if can_refresh:
+            since_attempt = now - self._attempted_at
+            if since_attempt >= self._s.jwks_min_refresh_seconds or (
+                not self._keys and since_attempt >= 1
+            ):
                 self._attempted_at = now
                 try:
                     self._keys = self._fetch()
                     self._fetched_at = now
+                    self._refresh_failed = False
                 except JWKSUnavailable:
                     log.warning("jwks_fetch_failed")
-                    stale_ok = self._keys and now - self._fetched_at < MAX_STALE_SECONDS
-                    if not (stale_ok and kid in self._keys):
-                        raise
-            elif not fresh and not self._keys:
+                    self._refresh_failed = True
+            if not self._keys:
                 raise JWKSUnavailable
+            age = now - self._fetched_at
+            usable = age < ttl or (self._refresh_failed and age < ttl + MAX_STALE_SECONDS)
+            if not usable:
+                raise JWKSUnavailable
+            if age >= ttl and kid not in self._keys:
+                raise JWKSUnavailable  # outage: cannot tell unknown kid from rotation
             key = self._keys.get(kid)
             if key is None:
                 raise KeyError(kid)

@@ -42,6 +42,10 @@ See `.env.example` (names/placeholders only).
 | `AUTH_LEEWAY_SECONDS`, `AUTH_JWKS_TIMEOUT_SECONDS`, `AUTH_JWKS_CACHE_SECONDS`, `AUTH_JWKS_MIN_REFRESH_SECONDS` | Clock leeway, bounded JWKS fetch timeout, cache TTL, minimum interval between refreshes for unknown `kid` |
 | `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_POOL_TIMEOUT_SECONDS`, `DB_STATEMENT_TIMEOUT_MS` | Per-instance pool bounds. Total connections ≈ instances × (size + overflow); keep below the provider limit (use the provider's pooled endpoint if needed) |
 
+The JWKS cache serves keys while younger than `AUTH_JWKS_CACHE_SECONDS`; after a
+failed refresh, expired keys are used for at most one more hour, then every
+request returns 503 (also during the refresh cooldown).
+
 Missing/invalid auth configuration fails closed: private routes return `503
 service_unavailable` (or `401` without a token). There is no development bypass
 and identity is never taken from request headers/body.
@@ -105,16 +109,27 @@ Notes:
 
 ## Deployment (Railway + dedicated PostgreSQL such as Neon)
 
-Nothing has been provisioned or deployed from this repository. `railway.json`
-builds `Dockerfile` (non-root uid 10001), health-checks `/health`, and runs
-`python -m app.migrate` as the **pre-deploy release command**, once per
-release, never per replica. Required steps (operator):
+Nothing has been provisioned or deployed from this repository, and there is
+deliberately **no `railway.json`**: Railway's current documentation does not
+support it for new services (legacy support ends 2026-12-01) and prefers
+infrastructure-as-code, which would need a separately approved plan/apply that
+has not been run. Configure the service manually (or via an approved IaC plan):
 
-1. Create a dedicated PostgreSQL database; set `DATABASE_URL` as a Railway secret.
-2. Set `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE` (OIDC above).
-3. Deploy with the Railway CLI/dashboard from `apps/api` (`railway up` after
-   linking the service); watch the migration log, then `GET /ready` must be 200.
-4. Scale replicas horizontally; pools are per instance.
+1. Create a dedicated PostgreSQL database; keep its URL as a Railway secret
+   variable `DATABASE_URL`.
+2. Create a Railway service from this repository with **source/root directory
+   `apps/api`** and the **Dockerfile** builder (non-root uid 10001, no migration
+   on start).
+3. Set variables `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE` (OIDC above)
+   plus optional pool tuning from the example environment file.
+4. Set the **pre-deploy (release) command** to `python -m app.migrate`, so
+   migrations run once per release, never per replica or on container start.
+5. Start command: the image default (`uvicorn app.main:app_factory --factory`,
+   listening on `$PORT`).
+6. Healthcheck path: `/health` (liveness). Treat `GET /ready` as the
+   post-release gate: it is 200 only after auth configuration is valid and the
+   schema is at head; it is not a pre-config liveness probe.
+7. Scale replicas horizontally; pools are per instance.
 
 Manual migration: `DATABASE_URL=… python -m app.migrate` (or
 `alembic upgrade head`). The Docker image was not built in this environment
